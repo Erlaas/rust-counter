@@ -48,13 +48,17 @@ impl Counter {
     /// ```bash
     /// near call counter.YOU.testnet increment --accountId donation.YOU.testnet
     /// ```
-    pub fn increment(&mut self) {
+    pub fn operation(&mut self, param: i8, plus: bool) {
         // note: adding one like this is an easy way to accidentally overflow
         // real smart contracts will want to have safety checks
         // e.g. self.val = i8::wrapping_add(self.val, 1);
         // https://doc.rust-lang.org/std/primitive.i8.html#method.wrapping_add
-        self.val += 1;
-        let log_message = format!("Increased number to {}", self.val);
+
+        match plus {
+            true => self.val += param,
+            false => self.val -= param,
+        }
+        let log_message = format!("Changed value to {}", self.val);
         env::log(log_message.as_bytes());
         after_counter_change();
     }
@@ -67,16 +71,6 @@ impl Counter {
     /// ```bash
     /// near call counter.YOU.testnet decrement --accountId donation.YOU.testnet
     /// ```
-    pub fn decrement(&mut self) {
-        // note: subtracting one like this is an easy way to accidentally overflow
-        // real smart contracts will want to have safety checks
-        // e.g. self.val = i8::wrapping_sub(self.val, 1);
-        // https://doc.rust-lang.org/std/primitive.i8.html#method.wrapping_sub
-        self.val -= 1;
-        let log_message = format!("Decreased number to {}", self.val);
-        env::log(log_message.as_bytes());
-        after_counter_change();
-    }
 
     /// Reset to zero.
     pub fn reset(&mut self) {
@@ -132,7 +126,7 @@ mod tests {
         testing_env!(context.build());
         // instantiate a contract variable with the counter at zero
         let mut contract = Counter { val: 0 };
-        contract.increment();
+        contract.increment(10, true);
         println!("Value after increment: {}", contract.get_num());
         // confirm that we received 1 when calling get_num
         assert_eq!(1, contract.get_num());
